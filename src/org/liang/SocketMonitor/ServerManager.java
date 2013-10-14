@@ -102,7 +102,22 @@ public class ServerManager{
 			send.start();
 		}
 	}
-	
+
+	public void tryConnectAll(){
+
+	String[] addresses = prop.getProperty("machines.address").split(",");
+	//Create and start a list of client threads. Each thread takes server address and port as input.
+	LinkedList<Thread> clientThreads = new LinkedList<Thread>();
+	for (int i = 0; i < addresses.length; i++) {
+		String[] hostPort = addresses[i].split(":");
+		InetAddress address = InetAddress.getByName(hostPort[0]);
+		Thread newThread = new LogQuerierClientThread(address,
+				Integer.parseInt(hostPort[1]), clientArgs);
+		newThread.start();
+		clientThreads.add(newThread);
+	}	
+
+	}	
 	
 	public static void main(String[] arg) throws IOException, InterruptedException {
 		if(arg == null || arg.length != 2) {
@@ -112,6 +127,7 @@ public class ServerManager{
 		
 		Thread socketListener = new Thread(new ServerSocketListener(SM.GetPort()));
 		socketListener.start();
+		SM.tryConnectAll();
 
 		SM.ConsoleHandler();
 
