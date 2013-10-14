@@ -22,3 +22,6 @@ classes: $(CLASSES:.java=.class)
 
 clean:
 	rm *~; rm -rf ../bin/*
+
+compileProtoc:
+	javac -cp .:../lib/protobuf-java-2.5.0.jar -d ../bin/ org/liang/AddMachine.java
