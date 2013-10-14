@@ -1,0 +1,27 @@
+package protoc;
+
+option java_package = "org.liang.protoc";
+option java_outer_classname = "MachineBookProtos";
+
+message Machine {
+	required string hostName= 1;
+	required int32 port = 2;
+	required int32 id = 3;
+
+	enum PhoneType {
+		MOBILE = 0;
+		HOME = 1;
+		WORK = 2;
+	}
+
+	/*message PhoneNumber {*/
+		/*required string number = 1;*/
+		/*optional PhoneType type = 2 [default = HOME];*/
+	/*}*/
+
+	/*repeated PhoneNumber phone = 4;*/
+}
+
+message MachineBook {
+	repeated Machine machine = 1;
+}
