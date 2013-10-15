@@ -5,11 +5,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.LinkedList;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,6 +28,7 @@ public class ServerManager{
 
 	private static Map<String, Integer> clientList = new HashMap<String, Integer>();
 	private int _port;
+	private int ID;
 	
 	private String _hostName;
 	
@@ -42,13 +48,18 @@ public class ServerManager{
 	
 	public ServerManager() {}
 	
-	public ServerManager(String hn, String p) throws IOException {
+	public ServerManager(String hn, String p, String a_id) throws IOException {
 		this._hostName = hn;
 		this._port = Integer.parseInt(p);
+		this.ID = Integer.parseInt(a_id);
 	}
 	
-	public int GetPort() {
+	public int getPort() {
 		return this._port;
+	}
+
+	public int getID() {
+		return this.ID;
 	}
 
 	public String getHostname(){
@@ -87,49 +98,59 @@ public class ServerManager{
 	 * ls
 	 */
 	public void GREPCommand(String input) {
-		if(input.split(" ").length != 3)
-			System.out.println("Usage: grep localhost:8080  pattern");
-		else {
-			String DestHostAndPort = input.split(" ")[1];
+		//if(input.split(" ").length != 3)
+			//System.out.println("Usage: grep localhost:8080  pattern");
+		//else {
+			//String DestHostAndPort = input.split(" ")[1];
 
-			String desHost = DestHostAndPort.split(":")[0];
-			int desPort = Integer.parseInt(DestHostAndPort.split(":")[1]);
+			//String desHost = DestHostAndPort.split(":")[0];
+			//int desPort = Integer.parseInt(DestHostAndPort.split(":")[1]);
 
-			GrepCommand aGrep = new GrepCommand(desPort, desHost, input.split(" ")[2]);
+			//GrepCommand aGrep = new GrepCommand(desPort, desHost, input.split(" ")[2]);
 
-			CommandSender cmdSender = new CommandSender(aGrep);
-			Thread send = new Thread(cmdSender);
-			send.start();
-		}
+			//CommandSender cmdSender = new CommandSender(aGrep);
+			//Thread send = new Thread(cmdSender);
+			//send.start();
+		//}
 	}
 
-	public void tryConnectAll(){
+	public void tryConnectAll() throws FileNotFoundException, IOException{
 
-	String[] addresses = prop.getProperty("machines.address").split(",");
-	//Create and start a list of client threads. Each thread takes server address and port as input.
-	LinkedList<Thread> clientThreads = new LinkedList<Thread>();
-	for (int i = 0; i < addresses.length; i++) {
-		String[] hostPort = addresses[i].split(":");
-		InetAddress address = InetAddress.getByName(hostPort[0]);
-		Thread newThread = new LogQuerierClientThread(address,
-				Integer.parseInt(hostPort[1]), clientArgs);
-		newThread.start();
+		Command aCommand = new MachineCommand(getPort(), getHostname(), getID());
+		
+		Properties prop = new Properties();
+		FileInputStream fis = new FileInputStream("./liang.prop");
+		prop.load(fis);
+
+		String[] addresses = prop.getProperty("machines.address").split(",");
+		//Create and start a list of client threads. Each thread takes server address and port as input.
+		LinkedList<Thread> clientThreads = new LinkedList<Thread>();
+		for (int i = 0; i < addresses.length; i++) {
+			String[] hostPort = addresses[i].split(":");
+			String address = hostPort[0];
+			if(Integer.parseInt(hostPort[1]) == getPort()) continue;
+
+			CommandSender sendCmd = new CommandSender(address,
+					Integer.parseInt(hostPort[1]), aCommand);
+			sendCmd.PrintCommand();
+
+			Thread newThread = new Thread(sendCmd);
+			newThread.start();
 		clientThreads.add(newThread);
-	}	
+		}	
 
 	}	
 	
 	public static void main(String[] arg) throws IOException, InterruptedException {
-		if(arg == null || arg.length != 2) {
-			System.err.println("Usage: ProcessManagerServer hostname port");
+		if(arg == null || arg.length != 3) {
+			System.err.println("Usage: ManagerServer hostname porti id");
 		}
-		ServerManager SM = new ServerManager(arg[0], arg[1]);
+		ServerManager SM = new ServerManager(arg[0], arg[1], arg[2]);
 		
-		Thread socketListener = new Thread(new ServerSocketListener(SM.GetPort()));
+		Thread socketListener = new Thread(new ServerSocketListener(SM.getPort()));
 		socketListener.start();
 		SM.tryConnectAll();
 
 		SM.ConsoleHandler();
-
 	}
 }

@@ -2,7 +2,6 @@
 package org.liang.SocketMonitor;
 import java.io.Serializable;
 
-
 /**
  * 
  * @author liang
@@ -11,7 +10,7 @@ import java.io.Serializable;
 public abstract class Command implements Serializable{
 	public enum cmdType {
 		//The command type
-		GREP(0) , PROCESS_COMING(4);
+		GREP(0) , INIT(1), PROCESS_COMING(4);
 		private int _type;
 		private cmdType(int a) {
 			_type = a;
